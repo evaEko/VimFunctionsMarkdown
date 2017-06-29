@@ -1,0 +1,64 @@
+let g:filepath = expand('%:p')
+
+function! CheckPicture()
+  normal F{lvf,hy
+  let filename = @"
+  let pattern = '.*\/resources\/[a-zA-Z-]*\/'
+  let guidepath = matchlist(g:filepath, pattern, '')
+  execute '!eog ' . guidepath[0]. 'images/' . filename
+endfunction
+
+function! CheckInlinePic()
+  normal T{vt}y
+  let filename = @"
+  let pattern = '.*\/resources\/[a-zA-Z-]*\/'
+  let guidepath = matchlist(g:filepath, pattern, '')
+  execute '!eog ' . guidepath[0]. 'images/' . filename
+endfunction
+
+function! CheckHTMLLink()
+  normal F"f/vf"hy
+  let href = @"
+  let id = ""
+  if href =~ "#"
+     let idpattern = '#.*'
+     let id = matchlist(href, idpattern, '')
+     let href = substitute(href, '#.*', '', '')
+  end
+
+  let pattern = '.*\/lsps-doc\/'
+  let flag = ''
+  let guidepath = matchlist(g:filepath, pattern, flag)
+  echo guidepath[0]
+
+  execute '!firefox -new-window file://' . guidepath[0]. 'target/html'. href . '\' .id[0]
+endfunction
+
+function! CheckRef()
+  let pattern = '.*\/resources\/[a-zA-Z-]*\/'
+  let guidepath = matchlist(g:filepath, pattern, '')
+  normal T@f lvey
+  let reference = @"
+  execute '!cd ' . guidepath[0] . '; grep -r "\#' . reference . '"'
+endfunction
+
+function! CheckLink()
+  normal yy
+  let linkLine = @"
+  if linkLine =~ "href="
+    call CheckHTMLLink()
+  elseif linkLine =~ "@"
+    if linkLine =~ "@img"
+      call CheckPicture()
+    elseif linkLine =~ "@iimg"
+      call CheckInlinePic()
+    else
+      call CheckRef()
+    end
+  else
+    echom "FAILED"
+  end
+endfunction
+
+map <F9> :set syntax=doxygen<CR>
+nnoremap <F12> :call CheckLink()<CR>
